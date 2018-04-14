@@ -1,34 +1,74 @@
-from flask import Flask, render_template, request, Markup
-import apiai
-import json
-import sys
+"""
+Demo Flask application to test the operation of Flask with socket.io
+Aim is to create a webpage that is constantly updated with random numbers from a background python process.
+30th May 2014
+"""
+
+# Start with a basic flask app webpage.
+from flask_socketio import SocketIO, emit
+from flask import Flask, render_template, url_for, copy_current_request_context
+from random import random
+from time import sleep
+from threading import Thread, Event
 
 
-def textMessage(update):
-    request = apiai.ApiAI('167a082419914df2b44700f2bcda6087').text_request() # Токен API к Dialogflow
-    request.lang = 'ru' # На каком языке будет послан запрос
-    request.session_id = 'ZhuldyzAIbot' # ID Сессии диалога (нужно, чтобы потом учить бота)
-    request.query = update # Посылаем запрос к ИИ с сообщением от юзера
-    responseJson = json.loads(request.getresponse().read().decode('utf-8'))
-    response = responseJson['result']['fulfillment']['speech'] # Разбираем JSON и вытаскиваем ответ
-    # Если есть ответ от бота - присылаем юзеру, если нет - бот его не понял
-    if response:
-        print("Действие: " + str(responseJson['result']['action']))
-        print("Ответ: " + str(responseJson['result']['fulfillment']['speech']))
-        print("Вероятность: " + str(responseJson['result']['score']*100))
-    else:
-        print("Непонятно")
-
+__author__ = 'slynn'
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+app.config['DEBUG'] = True
 
-@app.route("/")  # Root for login page is index "/"
-def face():
+#turn the flask app into a socketio app
+socketio = SocketIO(app)
 
-    return render_template(
-        "face.html", **locals())
+#random number Generator Thread
+thread = Thread()
+thread_stop_event = Event()
+
+class RandomThread(Thread):
+    def __init__(self):
+        self.delay = 1
+        super(RandomThread, self).__init__()
+
+    def randomNumberGenerator(self):
+        """
+        Generate a random number every 1 second and emit to a socketio instance (broadcast)
+        Ideally to be run in a separate thread?
+        """
+        #infinite loop of magical random numbers
+        print("Making random numbers")
+        while not thread_stop_event.isSet():
+            number = round(random()*10, 3)
+            print(number)
+            socketio.emit('newnumber', {'number': number}, namespace='/test')
+            sleep(self.delay)
+
+    def run(self):
+        self.randomNumberGenerator()
 
 
-if __name__ == "__main__":
-    # It creates https access by last argument. It is need to be give to web-page permission to microphone
-    app.run(host='0.0.0.0', port=8090) #, ssl_context='adhoc')  # If no need in https, just delete last argument
+@app.route('/')
+def index():
+    #only by sending this page first will the client be connected to the socketio instance
+    return render_template('face.html')
+
+@socketio.on('connect', namespace='/test')
+def test_connect():
+    # need visibility of the global thread object
+    global thread
+    print('Client connected')
+
+    #Start the random number generator thread only if the thread has not been started before.
+    if not thread.isAlive():
+        print("Starting Thread")
+        thread = RandomThread()
+        thread.start()
+
+@socketio.on('disconnect', namespace='/test')
+def test_disconnect():
+    print('Client disconnected')
+
+
+if __name__ == '__main__':
+    socketio.run(app, host="0.0.0.0", port=3000)
+
