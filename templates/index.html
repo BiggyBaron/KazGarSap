@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Robot Zhuldyz</title>
+    <script type=text/javascript src="{{ url_for('static', filename='js/jquery-3.3.1.min.js') }}"></script>
+</head>
+<body>
+    <script>
+        var timeout = setInterval(get_len, 2000);
+        function get_len() {
+            $.ajax({
+                type: "POST",
+                url: "/get_len",
+                data: $('form').serialize(),
+                type: 'POST',
+                success: function(response) {
+                    var json = jQuery.parseJSON(response)
+                    $('#len').html(json.len)
+                    $("#myimage").attr('src',json.path);
+                    console.log(response);
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        }
+    </script>
+
+    <div id="len"></div>
+    <img id="myimage" src="/static/sad.jpg" height="42" width="42"/>
+</body>
+</html>
