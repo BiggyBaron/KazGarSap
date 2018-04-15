@@ -5,10 +5,61 @@
     <title>Robot Zhuldyz</title>
     <script type=text/javascript src="{{ url_for('static', filename='js/jquery-3.3.1.min.js') }}"></script>
 </head>
-<body>
+<body bgcolor="#000000">
     <script>
-        var timeout = setInterval(get_len, 2000);
+// Starting Speech Recognition
+function startDictation() {
+    if (window.hasOwnProperty('webkitSpeechRecognition')) {
+      var recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "ru";
+      recognition.start();
+      recognition.onresult = function(e) {
+        document.getElementById('transcript').value
+                                 = e.results[0][0].transcript;
+        recognition.stop();
+        document.getElementById('labnol').submit();
+      };
+      recognition.onerror = function(e) {
+        recognition.stop();
+      }
+    }
+  }
+// Finished Speech Recognition
+
+// Wait bro
+function wait(ms){
+   var start = new Date().getTime();
+   var end = start;
+   while(end < start + ms) {
+     end = new Date().getTime();
+  }
+}
+// Finish Wait
+
+// Start Speech Generation
+function speak(text, callback) {
+    var u = new SpeechSynthesisUtterance();
+    u.text = text;
+    u.lang = 'ru';
+    u.onend = function () {
+        if (callback) {
+            callback();
+        }
+    };
+    u.onerror = function (e) {
+        if (callback) {
+            callback(e);
+        }
+    };
+    speechSynthesis.speak(u);
+}
+// Finished Speech Generation
+
+        var timeout = setInterval(get_len, 500);
         function get_len() {
+
             $.ajax({
                 type: "POST",
                 url: "/get_len",
@@ -16,18 +67,42 @@
                 type: 'POST',
                 success: function(response) {
                     var json = jQuery.parseJSON(response)
-                    $('#len').html(json.len)
-                    $("#myimage").attr('src',json.path);
+                    if (json.face == 1){
+                    startDictation();
+                    //document.getElementById('transcript').value = "";
+                    }
+                    $('#len').html(json.len);
+                    $("#myimage").attr('src', json.path);
+                    if (json.phrase != ''){
+                    speak(json.phrase);
+                    }
                     console.log(response);
                 },
                 error: function(error) {
                     console.log(error);
                 }
             });
+
         }
     </script>
 
     <div id="len"></div>
-    <img id="myimage" src="/static/sad.jpg" height="42" width="42"/>
+    <center><img id="myimage" src="/static/Normal.png" height="420" width="800"/></center>
+    <img src="/static/Angry.png" height="0" width="0"/>
+    <img src="/static/Happy.png" height="0" width="0"/>
+    <img src="/static/Sexy.png" height="0" width="0"/>
+    <img src="/static/Suprised.png" height="0" width="0"/>
+    <img src="/static/Thinking.png" height="0" width="0"/>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+<form>
+                        <input type="text" name="text" contenteditable="true"
+                               id="transcript"/>
+</form>
 </body>
 </html>
