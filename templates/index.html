@@ -56,8 +56,9 @@ function speak(text, callback) {
     speechSynthesis.speak(u);
 }
 // Finished Speech Generation
-
-        var timeout = setInterval(get_len, 500);
+        speak({{answer2}});
+        startDictation();
+        var timeout = setInterval(get_len, 1000);
         function get_len() {
 
             $.ajax({
@@ -67,14 +68,10 @@ function speak(text, callback) {
                 type: 'POST',
                 success: function(response) {
                     var json = jQuery.parseJSON(response)
-                    if (json.face == 1){
-                    startDictation();
-                    //document.getElementById('transcript').value = "";
-                    }
                     $('#len').html(json.len);
                     $("#myimage").attr('src', json.path);
-                    if (json.phrase != ''){
-                    speak(json.phrase);
+                    if (json.refresh == 1){
+                    location.reload();
                     }
                     console.log(response);
                 },
@@ -87,7 +84,7 @@ function speak(text, callback) {
     </script>
 
     <div id="len"></div>
-    <center><img id="myimage" src="/static/Normal.png" height="420" width="800"/></center>
+    <center><img id="myimage" src="/static/{{name}}.png" height="420" width="800"/></center>
     <img src="/static/Angry.png" height="0" width="0"/>
     <img src="/static/Happy.png" height="0" width="0"/>
     <img src="/static/Sexy.png" height="0" width="0"/>
