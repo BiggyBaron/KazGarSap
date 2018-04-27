@@ -2,34 +2,8 @@ import random
 import apiai
 import json
 import cv2
-from gtts import gTTS
 import os
 import speech_recognition as sr
-import tkinter
-from PIL import Image, ImageTk
-
-
-def showPIL(pilImage):
-    global root
-    root = tkinter.Tk()
-    w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-    root.overrideredirect(1)
-    root.geometry("%dx%d+0+0" % (w, h))
-    root.focus_set()
-    root.bind("<Escape>", lambda e: (e.widget.withdraw(), e.widget.quit()))
-    canvas = tkinter.Canvas(root,width=w,height=h)
-    canvas.pack()
-    canvas.configure(background='black')
-    imgWidth, imgHeight = pilImage.size
-    if imgWidth > w or imgHeight > h:
-        ratio = min(w/imgWidth, h/imgHeight)
-        imgWidth = int(imgWidth*ratio)
-        imgHeight = int(imgHeight*ratio)
-        pilImage = pilImage.resize((imgWidth, imgHeight), Image.ANTIALIAS)
-    image = ImageTk.PhotoImage(pilImage)
-    imagesprite = canvas.create_image(w/2, h/2, image=image)
-    root.update()
-
 
 
 def recognize_face():
@@ -95,23 +69,16 @@ def listen_question():
             question = None
     except:
         question = input("Question?: ")
-    print(question)
     return question
 
 
 def show_emotion(emotion):
-    # img2 = cv2.imread("./static/" + str(emotion) + ".png")
-    # cv2.imshow("window", img2)
-    pilImage = Image.open("./static/" + str(emotion) + ".png")
-    print("./static/" + str(emotion) + ".png")
-    showPIL(pilImage)
+    # Send socks
     return True
 
 
 def say_answer(answer):
-    tts = gTTS(text=answer, lang='ru', slow=False)
-    tts.save("answer.mp2")
-    os.system("mpg321 answer.mp2")
+    # Send socks
     return True
 
 
@@ -133,8 +100,12 @@ def see_face():
     return True
 
 
+def location():
+
+    return True
+
+
 if __name__ == '__main__':
-    global root
     # Initialize OpenCV
     cap = cv2.VideoCapture(0)
     cap.set(3, 640) #WIDTH
